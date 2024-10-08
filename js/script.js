@@ -1,46 +1,116 @@
 document.addEventListener('DOMContentLoaded', function() {
-    function updateDateTime() {
-        const currentDate = new Date().toLocaleDateString('pt-BR', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
-        const currentTime = new Date().toLocaleTimeString('pt-BR', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
+    const confirmButton = document.getElementById('confirmButton');
+    const punchButton = document.getElementById('punchButton'); // Botão Bater Ponto
+    const overlay = document.getElementById('overlay'); // O overlay
+    const records = JSON.parse(localStorage.getItem('records')) || [];
+    const currentDateElem = document.getElementById('currentDate');
+    const currentTimeElem = document.getElementById('currentTime');
+
+    // Função para mostrar a sobreposição
+    punchButton.addEventListener('click', function() {
+        overlay.style.display = 'block'; // Exibe a sobreposição
+        updateOverlayDateTime(); // Atualiza a data e hora na sobreposição
+    });
+
+    // Função para atualizar a data e hora na sobreposição
+    function updateOverlayDateTime() {
+        const now = new Date();
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        const date = now.toLocaleDateString('pt-BR', options);
+        const time = now.toLocaleTimeString('pt-BR');
         
-        document.getElementById('currentDate').innerText = currentDate;
-        document.getElementById('currentTime').innerText = currentTime;
-        document.getElementById('overlayDateTime').innerHTML = `${currentDate} <br> ${currentTime}`;
+        const overlayDateTime = document.getElementById('overlayDateTime');
+        overlayDateTime.innerText = `Data: ${date} - Hora: ${time}`;
     }
 
-    document.getElementById('punchButton').addEventListener('click', function() {
-        const overlay = document.getElementById('overlay');
-        const overlayContent = document.getElementById('overlayContent');
+    // Função para atualizar a data e a hora na tela principal
+    function updateDateTime() {
+        const now = new Date();
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        const date = now.toLocaleDateString('pt-BR', options);
+        const time = now.toLocaleTimeString('pt-BR');
 
-        overlay.classList.add('visible');
-        overlayContent.classList.add('visible');
-    });
+        currentDateElem.innerText = date;
+        currentTimeElem.innerText = time;
+    }
 
-    document.getElementById('closeButton').addEventListener('click', function() {
-        closeOverlay();
-    });
+    // Chama a função para exibir a data e hora atuais
+    updateDateTime();
+    
+    // Atualiza a data e hora a cada segundo
+    setInterval(updateDateTime, 1000);
 
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeOverlay();
+    // Função para mostrar a mensagem de sucesso
+    function showSuccessMessage() {
+        const messageDiv = document.createElement('div');
+        messageDiv.innerText = "Ponto salvo com sucesso!";
+        messageDiv.style.position = 'fixed';
+        messageDiv.style.top = '20px';
+        messageDiv.style.left = '50%';
+        messageDiv.style.transform = 'translateX(-50%)';
+        messageDiv.style.padding = '10px';
+        messageDiv.style.backgroundColor = '#4CAF50'; // Verde
+        messageDiv.style.color = 'white';
+        messageDiv.style.fontSize = '16px';
+        messageDiv.style.zIndex = '1000';
+
+        const closeButton = document.createElement('button');
+        closeButton.innerText = "Fechar";
+        closeButton.style.marginLeft = '10px';
+        closeButton.style.backgroundColor = '#ffffff';
+        closeButton.style.border = 'none';
+        closeButton.style.cursor = 'pointer';
+
+        closeButton.addEventListener('click', function() {
+            messageDiv.remove();
+        });
+
+        messageDiv.appendChild(closeButton);
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    }
+
+    // Evento de clique para salvar o ponto
+    confirmButton.addEventListener('click', function() {
+        const name = document.getElementById('employeeName').value;
+        const ra = document.getElementById('employeeRA').value;
+        const action = document.getElementById('actionSelect').value;
+        const entryDate = document.getElementById('entryDate').value;
+        const entryTime = document.getElementById('entryTime').value; // Campo para horário
+
+        if (name && ra && action && entryDate && entryTime) {
+            const record = { 
+                name, 
+                ra, 
+                action, 
+                date: `${entryDate} ${entryTime}`, // Armazena data e hora juntos
+                file: null 
+            };
+            records.push(record);
+            localStorage.setItem('records', JSON.stringify(records));
+
+            // Mostrar a mensagem de sucesso
+            showSuccessMessage();
+
+            // Limpar os campos após salvar
+            document.getElementById('employeeName').value = '';
+            document.getElementById('employeeRA').value = '';
+            document.getElementById('actionSelect').value = '';
+            document.getElementById('entryDate').value = '';
+            document.getElementById('entryTime').value = ''; // Limpa o campo de horário
+
+            // Fechar o overlay após salvar
+            overlay.style.display = 'none';
+        } else {
+            alert('Por favor, preencha todos os campos obrigatórios.');
         }
     });
 
-    function closeOverlay() {
-        const overlay = document.getElementById('overlay');
-        const overlayContent = document.getElementById('overlayContent');
-
-        overlay.classList.remove('visible');
-        overlayContent.classList.remove('visible');
-    }
-
-    updateDateTime();
-    setInterval(updateDateTime, 1000);  // Atualiza o horário a cada segundo
-
-updateDateTime();
-    setInterval(updateDateTime, 1000);
+    // Evento para fechar o overlay
+    document.getElementById('closeButton').addEventListener('click', function() {
+        overlay.style.display = 'none'; // Esconde a sobreposição
+    });
 });
